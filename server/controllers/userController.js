@@ -11,10 +11,11 @@ try {
     }
     res.json({
         success:true,
-        userData:{
-            name:user.name,
-            isAccountVerified:user.isAccountVerified
-        }
+        userData: {
+        name: user.name,
+        email: user.email,
+        coverImage: user.coverImage,
+      },
     });
 
 
