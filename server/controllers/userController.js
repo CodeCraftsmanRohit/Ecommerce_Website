@@ -15,6 +15,7 @@ try {
         name: user.name,
         email: user.email,
         coverImage: user.coverImage,
+          ecoStats: user.ecoStats
       },
     });
 

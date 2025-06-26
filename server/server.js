@@ -4,6 +4,10 @@ import express from "express";
 // Import CORS middleware to enable Cross-Origin Resource Sharing (allows frontend & backend to interact on different origins)
 import cors from "cors";
 
+
+import { loadInitialProducts} from "./controllers/productController.js";
+
+
 // Load environment variables from a `.env` file into `process.env`
 import 'dotenv/config';
 
@@ -14,7 +18,8 @@ import cookieParser from "cookie-parser";
 import connectDB from "./config/mongodb.js";
 import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
-
+import productRoutes from "./routes/productRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 // Initialize the Express application
 const app = express();
 
@@ -22,7 +27,9 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // Call the function to connect to the MongoDB database
-connectDB();
+connectDB().then(() => {
+  loadInitialProducts();   // ← only runs once connection succeeds
+});
 
 // Middleware to automatically parse incoming JSON data in request bodies (makes `req.body` usable)
 app.use(express.json());
@@ -45,6 +52,7 @@ app.get('/', (req, res) => {
 });
 app.use('/api/auth',authRouter)
 app.use('/api/user',userRouter)
-
+app.use("/api/cart", cartRoutes);
+app.use("/api/products", productRoutes);
 // Start the server and listen on the specified port, logging a confirmation message when ready
 app.listen(port, () => console.log(`Server started on PORT:${port}`));
