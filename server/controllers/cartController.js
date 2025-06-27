@@ -22,10 +22,10 @@ const user = await User.findById(req.userId); // ✅ Correct
 export const removeFromCart = async (req, res) => {
   try {
     const { productId } = req.body;
+    const user = await User.findById(req.userId);
 
-    await User.findByIdAndUpdate(req.userid, {
-      $pull: { ecoCart: productId },
-    });
+    user.ecoCart = user.ecoCart.filter(p => p.toString() !== productId);
+    await user.save();
 
     res.json({ success: true });
   } catch (error) {
