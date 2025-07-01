@@ -2,8 +2,11 @@ import React, { useContext, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { toast } from "react-toastify";
+import {loadStripe} from "@stripe/stripe-js"
+
 
 const AddToCart = () => {
+  const apiURL=import.meta.env.VITE_BACKEND_URL
   const { ecoCart, removeFromEcoCart, setEcoCart } = useContext(AppContext);
 
   // Maintain quantity per product
@@ -51,8 +54,34 @@ const AddToCart = () => {
     return sum + (standardPrice - ecoPrice);
   }, 0);
 
-  const handlePayment = () => {
+  const handlePayment = async() => {
     toast.success("🧾 Proceeding to payment...");
+    const stripe=await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+     const body = {
+  products: ecoCart.map((item) => ({
+    name: item.name,
+    price: item.price,
+    quantity: quantities[item._id],
+    coverImage: item.coverImage,
+  })),
+};
+
+     const headers={
+      "Content-Type":"application/json"
+     }
+     const response=await fetch(`${apiURL}/api/create-checkout-session`,{
+      method:"POST",
+      headers:headers,
+      body:JSON.stringify(body)
+     })
+     const session=await response.json();
+     const result=stripe.redirectToCheckout({
+      sessionId:session.id
+     })
+     if(result.error){
+      console.log(result.error);
+     }
+
   };
 
   return (

@@ -1,6 +1,6 @@
 // routes/cartRoutes.js
 import express from "express";
-import { addToCart, removeFromCart, getCart } from "../controllers/cartController.js";
+import { addToCart, removeFromCart, getCart, clearCart } from "../controllers/cartController.js";
 import userAuth2 from '../middleware/userAuth.js'
 
 const router = express.Router();
@@ -9,5 +9,6 @@ const router = express.Router();
 router.post("/add", userAuth2, addToCart);
 router.post("/remove", userAuth2, removeFromCart);
 router.get("/", userAuth2, getCart);
+router.post("/clear",userAuth2,clearCart)
 
 export default router;

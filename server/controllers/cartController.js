@@ -50,3 +50,23 @@ export const getCart = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch cart" });
   }
 };
+export const clearCart = async (req, res) => {
+  try {
+    
+    const userId = req.userId;
+
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "User not authenticated" });
+    }
+
+    await User.updateOne({ _id: userId }, { $set: { ecoCart: [] } });
+
+    console.log("✅ Cart cleared via updateOne");
+    res.json({ success: true, message: "Cart cleared" });
+  } catch (error) {
+    console.error("❌ Error clearing cart:", error.message);
+    res.status(500).json({ success: false, message: "Failed to clear cart" });
+  }
+};
+
