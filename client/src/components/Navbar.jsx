@@ -158,6 +158,14 @@ const Navbar = () => {
               >
                 Profile
               </Link>
+              <Link
+  to="/my-orders"
+  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+  onClick={() => setProfileOpen(false)}
+>
+  My Orders
+</Link>
+
               <button
                 onClick={() => {
                   setProfileOpen(false);
@@ -221,6 +229,13 @@ const Navbar = () => {
                 >
                   Profile
                 </Link>
+                <Link
+  to="/my-orders"
+  className="py-2 text-gray-700 hover:text-blue-600"
+>
+  My Orders
+</Link>
+
                 <button
                   onClick={logout}
                   className="w-full text-left py-2 text-gray-700 hover:text-blue-600"

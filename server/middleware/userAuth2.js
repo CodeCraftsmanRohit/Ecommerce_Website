@@ -2,8 +2,10 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/usermodel.js';
 
-const userAuth = async (req, res, next) => {
+const userAuth2 = async (req, res, next) => {
   try {
+    console.log("🍪 Cookies:", req.cookies);
+
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized, no token" });
@@ -18,6 +20,8 @@ const userAuth = async (req, res, next) => {
     }
 
     // ✅ Attach full user object to req.user
+    console.log("✅ Authenticated user:", user.name);
+
     req.user = user;
     next();
   } catch (error) {
@@ -26,4 +30,4 @@ const userAuth = async (req, res, next) => {
   }
 };
 
-export default userAuth;
+export default userAuth2;

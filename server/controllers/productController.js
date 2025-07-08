@@ -1,5 +1,6 @@
 import Product from "../models/productModel.js";
 import fs from "fs";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import userModel from "../models/usermodel.js";
 
 
@@ -33,12 +34,65 @@ export const loadInitialProducts = async () => {
 };
 
 
+
 export const addProduct = async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
+    const {
+      barcode,
+      name,
+      ecoScore,
+      materials,
+      recyclable,
+      carbonFootprint,
+      recyclingTips,
+      category,
+      price,
+      currentStock,
+      salesHistory,
+      seasonalTrend,
+      weather,
+      demandSpike,
+      unitCost,
+      supplierId,
+      leadTime,
+      availability,
+    } = req.body;
+
+    let coverImageUrl = "";
+    if (req.file) {
+      const cloudinaryRes = await uploadOnCloudinary(req.file.buffer);
+      coverImageUrl = cloudinaryRes.secure_url;
+    }
+
+    const newProduct = new Product({
+      barcode,
+      name,
+      ecoScore,
+      materials: JSON.parse(materials),
+      recyclable: JSON.parse(recyclable),
+      carbonFootprint: parseFloat(carbonFootprint),
+      recyclingTips,
+      coverImage: coverImageUrl,
+      category,
+      price: parseFloat(price),
+      currentStock: parseInt(currentStock),
+      salesHistory: JSON.parse(salesHistory),
+      seasonalTrend,
+      externalFactors: { weather, demandSpike },
+      unitCost: parseFloat(unitCost),
+      suppliers: [
+        {
+          id: supplierId,
+          leadTime: parseInt(leadTime),
+          availability: JSON.parse(availability),
+        },
+      ],
+    });
+
     await newProduct.save();
     res.status(201).json({ success: true, message: "Product added successfully", product: newProduct });
   } catch (err) {
+    console.error("❌ Product creation failed:", err);
     res.status(500).json({ success: false, message: "Failed to add product", error: err.message });
   }
 };

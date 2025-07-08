@@ -20,6 +20,13 @@ import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import orderRoutes from './routes/orderRoutes.js';
+import adminRoutes from "./routes/adminRoutes.js";
+
+
+
+
 // Initialize the Express application
 const app = express();
 
@@ -50,9 +57,14 @@ app.use(cors({origin:aloowedOrigins, credentials: true }));
 app.get('/', (req, res) => {
   return res.send("API Working");
 });
+app.use("/api/admin", adminRoutes);
 app.use('/api/auth',authRouter)
 app.use('/api/user',userRouter)
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/orders", orderRoutes);
+
+
 // Start the server and listen on the specified port, logging a confirmation message when ready
 app.listen(port, () => console.log(`Server started on PORT:${port}`));

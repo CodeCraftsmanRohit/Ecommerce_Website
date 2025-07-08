@@ -18,6 +18,20 @@ const user = await User.findById(req.userId); // ✅ Correct
   }
 };
 
+export const clearEcoCart = async (req, res) => {
+  try {
+    const user = req.user;
+
+    user.ecoCart = [];
+    await user.save();
+
+    res.json({ success: true, message: "Cart cleared successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 // ➤ Remove product from cart
 export const removeFromCart = async (req, res) => {
   try {

@@ -1,12 +1,14 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { AppContext } from "../context/AppContext";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { toast } from "react-toastify";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY); // ✅ Make sure it's in your .env
 
 const AddToCart = () => {
-  const { ecoCart, removeFromEcoCart, setEcoCart } = useContext(AppContext);
+  const { ecoCart, removeFromEcoCart, backendUrl } = useContext(AppContext);
 
-  // Maintain quantity per product
   const [quantities, setQuantities] = useState(() => {
     const initial = {};
     ecoCart.forEach((item) => {
@@ -15,19 +17,15 @@ const AddToCart = () => {
     return initial;
   });
 
-  // Update quantity state when cart changes
-  React.useEffect(() => {
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
     const updated = {};
     ecoCart.forEach((item) => {
       updated[item._id] = quantities[item._id] || 1;
     });
     setQuantities(updated);
   }, [ecoCart]);
-
-  const handleRemove = (productId) => {
-    removeFromEcoCart(productId);
-    toast.warn("❌ Item removed from Eco Cart");
-  };
 
   const incrementQty = (id) => {
     setQuantities((prev) => ({ ...prev, [id]: prev[id] + 1 }));
@@ -40,19 +38,55 @@ const AddToCart = () => {
     }));
   };
 
+  const handleRemove = (id) => {
+    removeFromEcoCart(id);
+    toast.warn("❌ Item removed from Eco Cart");
+  };
+
   const totalCost = ecoCart.reduce(
     (sum, item) => sum + (item.price || 0) * quantities[item._id],
     0
   );
 
   const totalSavings = ecoCart.reduce((sum, item) => {
-    const standardPrice = (item.originalPrice || item.price || 0) * quantities[item._id];
-    const ecoPrice = (item.price || 0) * quantities[item._id];
-    return sum + (standardPrice - ecoPrice);
+    const original = (item.originalPrice || item.price || 0) * quantities[item._id];
+    const eco = (item.price || 0) * quantities[item._id];
+    return sum + (original - eco);
   }, 0);
 
-  const handlePayment = () => {
-    toast.success("🧾 Proceeding to payment...");
+  const handlePayment = async () => {
+    setLoading(true);
+    try {
+      if (ecoCart.length === 0) return;
+
+      const products = ecoCart.map((item) => ({
+        name: item.name,
+        coverImage: item.coverImage,
+        price: item.price,
+        quantity: quantities[item._id],
+      }));
+
+      const response = await fetch(`${backendUrl}/api/payment/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ products }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || "Payment session creation failed");
+      }
+
+      const stripe = await stripePromise;
+      await stripe.redirectToCheckout({ sessionId: data.id }); // ✅ Real Stripe redirect
+    } catch (err) {
+      console.error("Payment Error:", err);
+      toast.error("❌ Failed to initiate payment. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,11 +98,11 @@ const AddToCart = () => {
       {ecoCart.length === 0 ? (
         <p className="text-center text-gray-500">Your Eco Cart is empty.</p>
       ) : (
-        <div className="space-y-4 transition-all duration-300">
+        <div className="space-y-4">
           {ecoCart.map((item) => (
             <div
               key={item._id}
-              className="bg-white shadow rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center justify-between transition hover:shadow-lg"
+              className="bg-white shadow rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center justify-between"
             >
               <div className="flex gap-4 items-center w-full md:w-2/3">
                 <img
@@ -80,7 +114,7 @@ const AddToCart = () => {
                   <h2 className="text-lg font-semibold">{item.name}</h2>
                   <p className="text-sm text-gray-600">EcoScore: {item.ecoScore}</p>
                   <p className="text-sm text-gray-600">
-                    Price: ${item.price?.toFixed(2) || "0.00"} × {quantities[item._id]}
+                    Price: ${item.price?.toFixed(2)} × {quantities[item._id]}
                   </p>
                 </div>
               </div>
@@ -121,9 +155,10 @@ const AddToCart = () => {
             )}
             <button
               onClick={handlePayment}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition mt-3"
+              disabled={loading}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition mt-3 disabled:opacity-50"
             >
-              Proceed to Pay
+              {loading ? "Redirecting..." : "Proceed to Pay"}
             </button>
           </div>
         </div>
